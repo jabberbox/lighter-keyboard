@@ -1,3 +1,9 @@
+> **Stock size fork.** This is a copy of Light's keyboard app with one change: the keyboard is drawn at the size the
+> stock LightOS tools draw it. Light's library sizes the keys in fixed dp for a screen 360 dp wide, but LightOS runs
+> the Light Phone III at 2.55 pixels per dp, so the keyboard came out about 15% smaller than stock. See
+> `StockSizeKeyboardView.kt`. The mic key is hidden, since nothing in this keyboard handles dictation. It installs
+> under its own app id, `io.github.jabberbox.lp3keyboard.stocksize`, next to Light's own copy. Everything else is
+> Light's code, under their MIT license.
 # LPIII Keyboard
 
 A Compose implementation of the Light Phone's keyboard. To be used in LightOS, community tools, and/or as an Android system keyboard.

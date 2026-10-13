@@ -16,7 +16,6 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.thelightphone.lp3Keyboard.ui.Lp3KeyboardSwipeCallback
-import com.thelightphone.lp3Keyboard.ui.Lp3KeyboardView
 import com.thelightphone.lp3Keyboard.ui.SpecialKey
 import com.thelightphone.lp3Keyboard.ui.layout.LayoutRegistryItem
 import com.thelightphone.lp3Keyboard.ui.layout.buildRootViewModel
@@ -68,15 +67,8 @@ class IMEService : LifecycleInputMethodService(),
         renderedLayout = layout
         viewModel = vm
 
-        val view = Lp3KeyboardView(
-            context = this,
-            viewModel = vm,
-            // don't need to remap since no external keyboard
-            remapKeyCode = null
-        ).apply {
-            // don't need the keyboard view itself ot handle external keys, Android inputs will do it
-            handleHardwareKeyboardInput = false
-        }
+        // Same keyboard, drawn at the size the stock LightOS tools use (see StockSizeKeyboardView).
+        val view = StockSizeKeyboardView(context = this, viewModel = vm)
         setCandidatesViewShown(false)
         window?.window?.let {
             it.decorView.apply {

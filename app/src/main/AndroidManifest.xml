@@ -25,7 +25,7 @@
         <service
             android:name=".IMEService"
             android:exported="false"
-            android:label="Lp3 Keyboard"
+            android:label="LP3 Keyboard (stock size)"
             android:permission="android.permission.BIND_INPUT_METHOD"
             android:supportsSwitchingToNextInputMethod="false">
             <intent-filter>
