@@ -6,20 +6,20 @@
 > Light's code, under their MIT license.
 ## Dictation (added in this fork)
 
-The mic key listens and types what you say, using the [Vosk](https://alphacephei.com/vosk/) recognizer and its small
-English model, both inside the app. Nothing leaves the phone, and the app has no network permission.
+The mic key opens a black full-screen page that types what you say, using the [Vosk](https://alphacephei.com/vosk/)
+recognizer and its small English model, both inside the app. Nothing leaves the phone, and the app has no network
+permission. It looks and works like the stock Light keyboard's dictation page.
 
-- Tap the mic to start, tap it again to stop. A line above the keys says when it is listening. What you say appears
-  as you speak and settles when you pause, with a capital at the start of a sentence and a proper "I". It adds no
+- Tap the mic. Your words appear as you speak, with a capital at the start of a sentence and a proper "I". It adds no
   punctuation, so say what you mean or type it.
-- It stops by itself when the keyboard closes, the field changes, or after 3 minutes.
-- The first time, tap the mic: the keyboard opens its settings screen, where you allow the microphone once (button 4).
+- **DONE** types the text into the field you were in. **X** (or going back) throws it away. **RETRY** clears it and
+  listens again. It listens until you press one of them; a pause does not stop it.
+- The first time, it asks to use the microphone. The settings screen (button 4) can also ask.
 - The model is not kept in git. Run `tools/fetch-vosk-model.sh` once after cloning, before building. It checks the
   file's SHA-256.
 
 Licences: Vosk and the `vosk-model-small-en-us-0.15` model are Apache 2.0 (Alpha Cephei Inc.). This keyboard's own
 code is Light's, MIT.
-
 
 # LPIII Keyboard
 

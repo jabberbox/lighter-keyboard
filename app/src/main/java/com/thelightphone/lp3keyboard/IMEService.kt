@@ -17,8 +17,6 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import com.thelightphone.lp3Keyboard.ui.Lp3KeyboardSwipeCallback
 import com.thelightphone.lp3Keyboard.ui.SpecialKey
 import com.thelightphone.lp3Keyboard.ui.layout.LayoutRegistryItem
@@ -72,7 +70,7 @@ class IMEService : LifecycleInputMethodService(),
         viewModel = vm
 
         // Same keyboard, drawn at the size the stock LightOS tools use (see StockSizeKeyboardView).
-        val view = StockSizeKeyboardView(context = this, viewModel = vm, dictation = dictationState.asStateFlow())
+        val view = StockSizeKeyboardView(context = this, viewModel = vm)
         setCandidatesViewShown(false)
         window?.window?.let {
             it.decorView.apply {
@@ -96,7 +94,6 @@ class IMEService : LifecycleInputMethodService(),
     }
 
     override fun onDestroy() {
-        dictation.release()
         layoutPrefs?.unregisterOnSharedPreferenceChangeListener(layoutChangeListener)
         store.clear()
         super.onDestroy()
@@ -122,17 +119,12 @@ class IMEService : LifecycleInputMethodService(),
     override fun onWindowHidden() {
         super.onWindowHidden()
         viewModel?.cancelHeldKeys()
-        dictation.stop()
-    }
-
-    override fun onFinishInputView(finishingInput: Boolean) {
-        dictation.stop()
-        super.onFinishInputView(finishingInput)
     }
 
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
         updateCapsMode()
+        commitDictation()
     }
 
     private fun updateCapsMode() {
@@ -143,75 +135,34 @@ class IMEService : LifecycleInputMethodService(),
         viewModel?.setCapsMode(caps != 0)
     }
 
-    // --- Dictation: speech to text on the phone, see Dictation.
+    // --- Dictation: the mic key opens DictationActivity; its text comes back through DictationBridge.
 
-    private val dictationState = MutableStateFlow(Dictation.State.Idle)
-
-    // A phrase being spoken is shown as composing text, which the recognizer keeps rewriting until it settles.
-    private var composing = false
-    private var phrasePrefix = ""
-    private var phraseStartsSentence = false
-
-    private val dictation by lazy {
-        Dictation(
-            this,
-            object : Dictation.Listener {
-                override fun onState(state: Dictation.State) {
-                    dictationState.value = state
-                    when (state) {
-                        Dictation.State.NoPermission -> askForMicrophone()
-                        // Stopped partway through a phrase: what was heard so far stays as typed text.
-                        Dictation.State.Idle -> endPhrase()
-                        else -> {}
-                    }
-                }
-
-                override fun onPartial(text: String) = showPhrase(text, final = false)
-
-                override fun onFinal(text: String) = showPhrase(text, final = true)
-            },
-        )
-    }
-
-    private fun beginPhrase(ic: android.view.inputmethod.InputConnection) {
-        if (composing) return
-        val before = ic.getTextBeforeCursor(2, 0)
-        phrasePrefix = if (DictationText.needsLeadingSpace(before)) " " else ""
-        val info = currentInputEditorInfo
-        val capSentences = info != null && (info.inputType and InputType.TYPE_TEXT_FLAG_CAP_SENTENCES) != 0
-        val afterSentenceEnd = before?.lastOrNull()?.let { it == '.' || it == '?' || it == '!' } == true
-        phraseStartsSentence = (info != null && ic.getCursorCapsMode(info.inputType) != 0) || (capSentences && afterSentenceEnd)
-        composing = true
-    }
-
-    private fun showPhrase(text: String, final: Boolean) {
-        val ic = currentInputConnection ?: return
-        beginPhrase(ic)
-        val words = DictationText.format(text, phraseStartsSentence)
-        if (final) {
-            // A finished phrase is committed with a space after it, the way the keyboard ends a typed word.
-            ic.commitText(if (words.isEmpty()) "" else "$phrasePrefix$words ", 1)
-            composing = false
-            updateCapsMode()
-        } else {
-            ic.setComposingText(if (words.isEmpty()) "" else "$phrasePrefix$words", 1)
+    /** Opens the dictation screen, telling it whether the words will start a sentence and need a space before them. */
+    private fun openDictation() {
+        val ic = currentInputConnection
+        var startsSentence = false
+        var needsSpace = false
+        if (ic != null) {
+            val before = ic.getTextBeforeCursor(2, 0)
+            needsSpace = DictationText.needsLeadingSpace(before)
+            val info = currentInputEditorInfo
+            val capSentences = info != null && (info.inputType and InputType.TYPE_TEXT_FLAG_CAP_SENTENCES) != 0
+            val afterSentenceEnd = before?.lastOrNull()?.let { it == '.' || it == '?' || it == '!' } == true
+            startsSentence = (info != null && ic.getCursorCapsMode(info.inputType) != 0) || (capSentences && afterSentenceEnd)
         }
-    }
-
-    /** Leaves whatever has been heard so far in the field as ordinary text. */
-    private fun endPhrase() {
-        if (!composing) return
-        currentInputConnection?.finishComposingText()
-        composing = false
-    }
-
-    /** A keyboard cannot ask for a permission itself, so the settings screen does it. */
-    private fun askForMicrophone() {
         startActivity(
-            Intent(this, MainActivity::class.java)
+            Intent(this, DictationActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                .putExtra(MainActivity.EXTRA_ASK_MIC, true),
+                .putExtra(DictationActivity.EXTRA_STARTS_SENTENCE, startsSentence)
+                .putExtra(DictationActivity.EXTRA_NEEDS_SPACE, needsSpace),
         )
+    }
+
+    /** Types dictated text that was waiting for the app to come back, if any. */
+    private fun commitDictation() {
+        val text = DictationBridge.take() ?: return
+        currentInputConnection?.commitText(text, 1)
+        updateCapsMode()
     }
 
     override fun onKeyPressed(code: Int) {
@@ -233,7 +184,6 @@ class IMEService : LifecycleInputMethodService(),
     }
 
     override fun onKeyReleased(code: Int) {
-        endPhrase()
         val text = buildString { appendCodePoint(code) }
         currentInputConnection?.commitText(text, 1)
         updateCapsMode()
@@ -251,13 +201,12 @@ class IMEService : LifecycleInputMethodService(),
             }
 
             SpecialKey.Return -> {
-                endPhrase()
                 currentInputConnection?.commitText("\n", 1)
             }
 
             SpecialKey.Voice -> {
                 tick()
-                dictation.toggle()
+                openDictation()
             }
 
             SpecialKey.Close -> {

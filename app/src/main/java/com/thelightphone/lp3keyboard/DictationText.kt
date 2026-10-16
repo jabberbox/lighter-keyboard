@@ -19,6 +19,17 @@ object DictationText {
         return text
     }
 
+    /**
+     * The text for the dictation screen: the phrases heard so far and the one still being spoken, as one run of words.
+     * Only the very first letter is capitalized (when [startsSentence]); there is no punctuation to end a sentence.
+     */
+    fun compose(phrases: List<String>, partial: String, startsSentence: Boolean): String {
+        val words = (phrases + partial).map { format(it, startsSentence = false) }.filter { it.isNotEmpty() }
+        if (words.isEmpty()) return ""
+        val text = words.joinToString(" ")
+        return if (startsSentence) text.replaceFirstChar { it.uppercaseChar() } else text
+    }
+
     /** Words can be joined onto text that already ends in a space, a newline, or nothing; otherwise a space is needed. */
     fun needsLeadingSpace(textBeforeCursor: CharSequence?): Boolean {
         val last = textBeforeCursor?.lastOrNull() ?: return false

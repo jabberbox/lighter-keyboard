@@ -25,6 +25,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- The dictation screen the mic key opens. Its own task, kept out of recents, black and full screen. -->
+        <activity
+            android:name=".DictationActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
         <service
             android:name=".IMEService"
             android:exported="false"

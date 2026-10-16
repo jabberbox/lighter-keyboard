@@ -47,4 +47,24 @@ class DictationTextTest {
         assertFalse(DictationText.needsLeadingSpace(""))
         assertFalse(DictationText.needsLeadingSpace(null))
     }
+
+    @Test
+    fun phrasesAndTheOneBeingSpokenAreJoinedIntoOneRun() {
+        assertEquals(
+            "Hello there how are you",
+            DictationText.compose(listOf("hello there", "how are"), "you", startsSentence = true),
+        )
+    }
+
+    @Test
+    fun onlyTheFirstLetterIsCapitalizedWhenAtASentenceStart() {
+        assertEquals("so I said hello", DictationText.compose(listOf("so i said"), "hello", startsSentence = false))
+        assertEquals("So I said hello", DictationText.compose(listOf("so i said"), "hello", startsSentence = true))
+    }
+
+    @Test
+    fun nothingHeardGivesAnEmptyText() {
+        assertEquals("", DictationText.compose(emptyList(), "", startsSentence = true))
+        assertEquals("", DictationText.compose(listOf("huh"), "  ", startsSentence = true))
+    }
 }

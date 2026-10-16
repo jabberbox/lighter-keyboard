@@ -51,7 +51,6 @@ class Dictation(private val context: Context, private val listener: Listener) {
 
     private val main = Handler(Looper.getMainLooper())
     private val worker = Executors.newSingleThreadExecutor()
-    private var model: Model? = null
     private var service: SpeechService? = null
 
     var state: State = State.Idle
@@ -76,7 +75,8 @@ class Dictation(private val context: Context, private val listener: Listener) {
         if (listening) return
         if (!hasPermission()) return set(State.NoPermission)
         set(State.Loading)
-        val loaded = model
+        main.removeCallbacks(dropModel)
+        val loaded = cachedModel
         if (loaded != null) {
             begin(loaded)
             return
@@ -86,12 +86,12 @@ class Dictation(private val context: Context, private val listener: Listener) {
             main.post {
                 // The person may have stopped while the model was loading.
                 if (state != State.Loading) {
-                    result.getOrNull()?.let { model = it }
+                    result.getOrNull()?.let { cachedModel = it }
                     return@post
                 }
                 result.fold(
                     onSuccess = { m ->
-                        model = m
+                        cachedModel = m
                         begin(m)
                     },
                     onFailure = { set(State.Failed) },
@@ -110,11 +110,14 @@ class Dictation(private val context: Context, private val listener: Listener) {
         set(State.Idle)
     }
 
-    /** Frees the recognizer's memory. The model loads again the next time it is needed. */
+    /**
+     * Stops listening. The model stays in memory for a few minutes, so dictating again right away is quick, and is
+     * freed after that.
+     */
     fun release() {
         stop()
-        model?.close()
-        model = null
+        main.removeCallbacks(dropModel)
+        main.postDelayed(dropModel, MODEL_KEEP_MS)
     }
 
     private fun begin(model: Model) {
@@ -185,6 +188,13 @@ class Dictation(private val context: Context, private val listener: Listener) {
     }
 
     private companion object {
+        @Volatile
+        var cachedModel: Model? = null
+        val dropModel = Runnable {
+            cachedModel?.close()
+            cachedModel = null
+        }
+        const val MODEL_KEEP_MS = 3 * 60 * 1000L
         const val SAMPLE_RATE = 16000.0f
         const val MODEL_ASSET = "model-en-us"
         const val MODEL_DIR = "model-en-us-0.15"
