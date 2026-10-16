@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import org.json.JSONObject
 import org.vosk.LibVosk
 import org.vosk.LogLevel
@@ -59,6 +60,7 @@ class Dictation(private val context: Context, private val listener: Listener) {
     val listening: Boolean get() = state == State.Listening || state == State.Loading
 
     private fun set(next: State) {
+        Log.i(TAG, "state ${state} -> $next")
         state = next
         listener.onState(next)
     }
@@ -100,7 +102,18 @@ class Dictation(private val context: Context, private val listener: Listener) {
         }
     }
 
+    // Counted so the log can say whether the recognizer produced anything; the words themselves are never logged.
+    private var partialCount = 0
+    private var resultCount = 0
+
+    private val autoStop = Runnable {
+        Log.i(TAG, "time limit reached")
+        stop()
+    }
+
     fun stop() {
+        main.removeCallbacks(autoStop)
+        if (service != null) Log.i(TAG, "stopped after $partialCount partial updates and $resultCount results")
         service?.let {
             // Cancel, not stop: stop would deliver one more result after the screen already kept what was heard.
             it.cancel()
@@ -128,11 +141,19 @@ class Dictation(private val context: Context, private val listener: Listener) {
             val started = speech.startListening(
                 object : RecognitionListener {
                     override fun onPartialResult(hypothesis: String?) {
-                        text(hypothesis, "partial")?.let(listener::onPartial)
+                        text(hypothesis, "partial")?.let {
+                            partialCount++
+                            listener.onPartial(it)
+                        }
                     }
 
+                    // Only lengths are ever logged, never the words.
+
                     override fun onResult(hypothesis: String?) {
-                        text(hypothesis, "text")?.let(listener::onFinal)
+                        text(hypothesis, "text")?.let {
+                            resultCount++
+                            listener.onFinal(it)
+                        }
                     }
 
                     override fun onFinalResult(hypothesis: String?) {
@@ -140,17 +161,26 @@ class Dictation(private val context: Context, private val listener: Listener) {
                     }
 
                     override fun onError(exception: Exception?) {
+                        Log.i(TAG, "error: ${exception?.message}")
                         service = null
                         set(State.Failed)
                     }
 
                     override fun onTimeout() {
+                        Log.i(TAG, "timeout")
                         stop()
                     }
                 },
-                MAX_LISTEN_MS,
             )
-            if (started) set(State.Listening) else {
+            if (started) {
+                partialCount = 0
+                resultCount = 0
+                set(State.Listening)
+                // The library's own timeout multiplies milliseconds by the sample rate in a 32-bit int, which overflows
+                // for anything over about 134 seconds and made it time out at once. So the limit is kept here.
+                main.removeCallbacks(autoStop)
+                main.postDelayed(autoStop, MAX_LISTEN_MS)
+            } else {
                 service = null
                 set(State.Failed)
             }
@@ -188,6 +218,8 @@ class Dictation(private val context: Context, private val listener: Listener) {
     }
 
     private companion object {
+        const val TAG = "Dictation"
+
         @Volatile
         var cachedModel: Model? = null
         val dropModel = Runnable {
@@ -201,6 +233,6 @@ class Dictation(private val context: Context, private val listener: Listener) {
         const val MODEL_VERSION = "vosk-model-small-en-us-0.15"
 
         /** A safety stop so the microphone is never left open by accident. */
-        const val MAX_LISTEN_MS = 3 * 60 * 1000
+        const val MAX_LISTEN_MS = 3 * 60 * 1000L
     }
 }

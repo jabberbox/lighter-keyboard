@@ -161,6 +161,7 @@ class IMEService : LifecycleInputMethodService(),
     /** Types dictated text that was waiting for the app to come back, if any. */
     private fun commitDictation() {
         val text = DictationBridge.take() ?: return
+        android.util.Log.i("Dictation", "typing ${text.length} characters into the field (connection ${if (currentInputConnection != null) "ok" else "missing"})")
         currentInputConnection?.commitText(text, 1)
         updateCapsMode()
     }

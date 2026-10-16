@@ -2,6 +2,7 @@ package com.thelightphone.lp3keyboard
 
 import android.Manifest
 import android.os.Bundle
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -114,6 +115,7 @@ class DictationActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        Log.i("Dictation", "screen started, permission=${dictation.hasPermission()}")
         if (dictation.hasPermission()) {
             startListening()
         } else if (!askingForPermission) {
@@ -123,6 +125,7 @@ class DictationActivity : ComponentActivity() {
     }
 
     override fun onStop() {
+        Log.i("Dictation", "screen stopped (finishing=$finishing)")
         // Leaving the screen any other way (home, another app) drops the dictation; the microphone is never left open.
         dictation.release()
         if (!finishing && !askingForPermission) finish()
@@ -156,6 +159,7 @@ class DictationActivity : ComponentActivity() {
         finishing = true
         dictation.stop()
         val text = DictationText.compose(phrases, partial, startsSentence)
+        Log.i("Dictation", "done: ${phrases.size} phrases, ${text.length} characters to type")
         if (text.isNotEmpty()) DictationBridge.deliver((if (needsSpace) " " else "") + text)
         dictation.release()
         finish()
