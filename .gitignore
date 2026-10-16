@@ -17,3 +17,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# The speech model is fetched by tools/fetch-vosk-model.sh, not kept in git.
+/app/src/main/assets/model-en-us/

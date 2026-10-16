@@ -1,9 +1,26 @@
 > **Stock size fork.** This is a copy of Light's keyboard app with one change: the keyboard is drawn at the size the
 > stock LightOS tools draw it. Light's library sizes the keys in fixed dp for a screen 360 dp wide, but LightOS runs
 > the Light Phone III at 2.55 pixels per dp, so the keyboard came out about 15% smaller than stock. See
-> `StockSizeKeyboardView.kt`. The mic key is hidden, since nothing in this keyboard handles dictation. It installs
+> `StockSizeKeyboardView.kt`. The mic key does dictation, on the phone (see below). It installs
 > under its own app id, `io.github.jabberbox.lp3keyboard.stocksize`, next to Light's own copy. Everything else is
 > Light's code, under their MIT license.
+## Dictation (added in this fork)
+
+The mic key listens and types what you say, using the [Vosk](https://alphacephei.com/vosk/) recognizer and its small
+English model, both inside the app. Nothing leaves the phone, and the app has no network permission.
+
+- Tap the mic to start, tap it again to stop. A line above the keys says when it is listening. What you say appears
+  as you speak and settles when you pause, with a capital at the start of a sentence and a proper "I". It adds no
+  punctuation, so say what you mean or type it.
+- It stops by itself when the keyboard closes, the field changes, or after 3 minutes.
+- The first time, tap the mic: the keyboard opens its settings screen, where you allow the microphone once (button 4).
+- The model is not kept in git. Run `tools/fetch-vosk-model.sh` once after cloning, before building. It checks the
+  file's SHA-256.
+
+Licences: Vosk and the `vosk-model-small-en-us-0.15` model are Apache 2.0 (Alpha Cephei Inc.). This keyboard's own
+code is Light's, MIT.
+
+
 # LPIII Keyboard
 
 A Compose implementation of the Light Phone's keyboard. To be used in LightOS, community tools, and/or as an Android system keyboard.

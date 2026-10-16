@@ -1,9 +1,12 @@
 package com.thelightphone.lp3keyboard
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -38,16 +41,37 @@ import com.thelightphone.lp3Keyboard.ui.layout.LayoutRegistryItem
 // Based on https://github.com/THEAccess/compose-keyboard-ime
 
 class MainActivity : AppCompatActivity() {
+    private val micGranted = mutableStateOf(false)
+
+    private val askForMic =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { micGranted.value = it }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            Options()
+        micGranted.value = hasMic()
+        // The keyboard opens this screen when the mic key is tapped without the permission.
+        if (intent?.getBooleanExtra(EXTRA_ASK_MIC, false) == true && !micGranted.value) {
+            askForMic.launch(Manifest.permission.RECORD_AUDIO)
         }
+        setContent {
+            Options(micGranted = micGranted.value, onAskMic = { askForMic.launch(Manifest.permission.RECORD_AUDIO) })
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        micGranted.value = hasMic()
+    }
+
+    private fun hasMic() = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+
+    companion object {
+        const val EXTRA_ASK_MIC = "ask_mic"
     }
 }
 
 @Composable
-fun Options() {
+fun Options(micGranted: Boolean, onAskMic: () -> Unit) {
     Column(
         modifier = Modifier
             .systemBarsPadding()
@@ -74,6 +98,10 @@ fun Options() {
         Spacer(modifier = Modifier.height(16.dp))
         Text(text = "3. Choose layout")
         LayoutPicker()
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(modifier = Modifier.fillMaxWidth(), enabled = !micGranted, onClick = onAskMic) {
+            Text(text = if (micGranted) "4. Microphone allowed (dictation on)" else "4. Allow the microphone (for dictation)")
+        }
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = text,
