@@ -1,8 +1,9 @@
-# Stock Size Keyboard for the Light Phone III
+# Lighter Keyboard
 
-An unofficial build of [Light's open-source keyboard](https://github.com/lightphone/light-keyboard) that draws at the
-same size as the keyboard inside the stock LightOS tools, with offline dictation on the mic key. It is a system
-keyboard, so it works in any app that uses the Android keyboard, such as Signal or a browser.
+A keyboard for the Light Phone III: an unofficial build of
+[Light's open-source keyboard](https://github.com/lightphone/light-keyboard) that draws at the same size as the keyboard
+inside the stock LightOS tools, with offline dictation on the mic key. It is a system keyboard, so it works in any app
+that uses the Android keyboard, such as Signal or a browser.
 
 This is not made by Light, and Light has not reviewed it.
 
@@ -26,7 +27,7 @@ is one file, `StockSizeKeyboardView.kt`.
 
 1. Download the APK from [Releases](../../releases), or add this repository to
    [Obtainium](https://github.com/ImranR98/Obtainium) to get updates.
-2. Open **Stock Size Keyboard**. Tap **1. Enable IME** and switch on "LP3 Keyboard (stock size)".
+2. Open **Lighter Keyboard**. Tap **1. Enable IME** and switch on "Lighter Keyboard".
 3. Tap **2. Select IME** and choose it. You can switch back to another keyboard at any time from the same picker.
 
 It needs Android 13 or newer and a 64-bit ARM phone, which the Light Phone III is. It installs next to any other

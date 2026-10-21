@@ -80,7 +80,7 @@ fun Options(micGranted: Boolean, onAskMic: () -> Unit) {
             .fillMaxWidth(),
     ) {
         val ctx = LocalContext.current
-        Text(text = "LP3 Keyboard")
+        Text(text = "Lighter Keyboard")
         val (text, setValue) = remember { mutableStateOf(TextFieldValue("Try here")) }
         Spacer(modifier = Modifier.height(16.dp))
         Button(modifier = Modifier.fillMaxWidth(), onClick = {

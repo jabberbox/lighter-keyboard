@@ -9,7 +9,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "io.github.jabberbox.lp3keyboard.stocksize"
+        applicationId = "io.github.jabberbox.lighterkeyboard"
         minSdk = 33
         targetSdk = 36
         versionCode = 3
