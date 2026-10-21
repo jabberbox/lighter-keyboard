@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.jabberbox.lp3keyboard.stocksize"
         minSdk = 33
         targetSdk = 36
-        versionCode = 2
-        versionName = providers.gradleProperty("projectVersion").get()
+        versionCode = 3
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -21,8 +21,23 @@ android {
         ndk { abiFilters += "arm64-v8a" }
     }
 
+    // Release signing comes from the environment, so no key or password is ever in the repository. Without these
+    // variables a release build is simply unsigned.
+    signingConfigs {
+        create("release") {
+            val store = System.getenv("KEYSTORE_FILE")
+            if (store != null) {
+                storeFile = file(store)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (System.getenv("KEYSTORE_FILE") != null) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
