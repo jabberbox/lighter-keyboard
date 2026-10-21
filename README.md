@@ -5,6 +5,8 @@ A keyboard for the Light Phone III: an unofficial build of
 inside the stock LightOS tools, with offline dictation on the mic key. It is a system keyboard, so it works in any app
 that uses the Android keyboard, such as Signal or a browser.
 
+<img src="docs/keyboard.png" alt="Lighter Keyboard on a Light Phone III" width="360">
+
 This is not made by Light, and Light has not reviewed it.
 
 ## Why this exists
@@ -27,15 +29,17 @@ is one file, `StockSizeKeyboardView.kt`.
 
 1. Download the APK from [Releases](../../releases), or add this repository to
    [Obtainium](https://github.com/ImranR98/Obtainium) to get updates.
-2. Open **Lighter Keyboard**. Tap **1. Enable IME** and switch on "Lighter Keyboard".
-3. Tap **2. Select IME** and choose it. You can switch back to another keyboard at any time from the same picker.
+2. Open **Lighter Keyboard**. Tap **Turn on the keyboard** and switch on "Lighter Keyboard" in Android's list.
+3. Tap **Use it as your keyboard** and choose it. You can switch back to another keyboard at any time from the same picker.
+4. Optional: tap **Allow the microphone** if you want dictation. Each row shows its state, so you can see what is left.
 
 It needs Android 13 or newer and a 64-bit ARM phone, which the Light Phone III is. It installs next to any other
 keyboard. LightOS may warn that the app is not signed by Light, since it is not.
 
 ## What it has
 
-- Light's keyboard as it is: letters, numbers, symbols and emoji, QWERTY layout.
+- Light's keyboard as it is: letters, numbers, symbols and emoji. Four layouts, chosen on the setup screen: QWERTY,
+  Colemak, and AZERTY for French and for Belgian.
 - **Dictation.** The mic key opens a black full-screen page that types what you say, using the
   [Vosk](https://alphacephei.com/vosk/) recognizer and its small English model, both inside the app. Your words appear
   as you speak, with a capital at the start of a sentence and a proper "I". It adds no punctuation. **DONE** types the
